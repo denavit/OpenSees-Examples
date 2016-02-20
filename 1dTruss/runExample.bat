@@ -1,2 +1,2 @@
-..\..\OpenSees.exe 1dTruss.tcl
+..\OpenSees.exe 1dTruss.tcl
 PAUSE

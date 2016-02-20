@@ -1,2 +1,2 @@
-..\..\OpenSees.exe EulerBuckling.tcl
+..\OpenSees.exe EulerBuckling.tcl
 PAUSE

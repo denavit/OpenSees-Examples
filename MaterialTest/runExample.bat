@@ -1,2 +1,2 @@
-..\..\OpenSees.exe materialTest.tcl
+..\OpenSees.exe materialTest.tcl
 PAUSE
