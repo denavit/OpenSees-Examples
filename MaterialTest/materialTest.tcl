@@ -2,6 +2,8 @@ model basic -ndm 1 -ndf 1
 
 # Define Material
 uniaxialMaterial Elastic 1 1000.0
+#uniaxialMaterial shenSteel01 1 29000 42 58 0.05 44.52 228 0.175 -0.553 6.47 34.8 0.0635 1.0 0.07 10000.0
+#uniaxialMaterial changManderConcrete01 1 -4.00 -0.003 4000.0 3.0 3.0 0.1 0.00005 3.0 3.0
 
 # Define Nodes
 node 1 0.0
@@ -27,9 +29,13 @@ test NormUnbalance 1.0e-4 20 1
 algorithm Newton 
 numberer Plain
 
-set totalDisp -0.008
+set totalDisp -0.002
 set numSteps 200
 integrator DisplacementControl 2 1 [expr $totalDisp/double($numSteps)]
-test NormUnbalance 1.0e-2 20 1
+test NormUnbalance 1.0e-2 20 0
 analysis Static
 analyze $numSteps
+
+puts "\nAnalysis Complete:"
+puts "Final Strain: [format %5f [nodeDisp 2 1]]"
+puts "Final Stress: [format %5f [getTime]]"
