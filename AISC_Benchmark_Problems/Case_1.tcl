@@ -1,5 +1,46 @@
+# AISC Benchmark Problem, Case 1
+# AISC 360-16, Commentary Figure C-C2.2
+#
+# Pinned-pinned column with uniform lateral load of 0.200 kip/ft and varying axial load
+#
+# Units: kip, in, sec
+
+# Ask whether to use shear deformations or not
+set gettingInput 1
+while { $gettingInput == 1 } {
+    puts "Use shear deformations? (y/n): "
+    gets stdin yesno
+    if { [string equal -nocase $yesno "y"] } {
+        set useShearDefs 1
+        set gettingInput 0
+        set Mbench_list [list 235.0 270.0 316.0 380.0]
+        set Dbench_list [list 0.202 0.230 0.269 0.322]
+    } elseif { [string equal -nocase $yesno "n"] } {
+        set useShearDefs 0
+        set gettingInput 0
+        set Mbench_list [list 235.0 269.0 313.0 375.0]
+        set Dbench_list [list 0.197 0.224 0.261 0.311]
+    }
+}
+puts "\n"
+
+# Cross-section geometry
+set A  14.1
+set I  484.0
+set d  13.8
+set tw 0.340
+
+# Material settings
+set E  29000.0
+set G  11200.0
+
+# Shear coefficient taken from Iyer 2005: A/Av
+set k  [expr ($d*$tw)/$A]
+
+
 model BasicBuilder -ndm 2 -ndf 3
 
+# Nodes
 node 1 0.0   0.0
 node 2 0.0  42.0
 node 3 0.0  84.0
@@ -13,17 +54,23 @@ node 9 0.0 336.0
 fix 1 1 1 0
 fix 9 1 0 0
 
-section Elastic 1 29000 14.1 484
+# Sections
+if { $useShearDefs } {
+    section Elastic 1 $E $A $I $G $k
+} else {
+    section Elastic 1 $E $A $I
+}
 geomTransf Corotational 1
 
-element dispBeamColumn 1 1 2 3 1 1
-element dispBeamColumn 2 2 3 3 1 1
-element dispBeamColumn 3 3 4 3 1 1
-element dispBeamColumn 4 4 5 3 1 1
-element dispBeamColumn 5 5 6 3 1 1
-element dispBeamColumn 6 6 7 3 1 1
-element dispBeamColumn 7 7 8 3 1 1
-element dispBeamColumn 8 8 9 3 1 1 
+# Elements
+element forceBeamColumn 1 1 2 3 1 1
+element forceBeamColumn 2 2 3 3 1 1
+element forceBeamColumn 3 3 4 3 1 1
+element forceBeamColumn 4 4 5 3 1 1
+element forceBeamColumn 5 5 6 3 1 1
+element forceBeamColumn 6 6 7 3 1 1
+element forceBeamColumn 7 7 8 3 1 1
+element forceBeamColumn 8 8 9 3 1 1
 
 timeSeries Linear 1
 pattern Plain 1 1 {
@@ -50,11 +97,13 @@ loadConst -time 0.0
 
 set Mmid [lindex [eleResponse 4 forces] 5]
 set Dmid [nodeDisp 5 1]
+set Mbench [lindex $Mbench_list 0]
+set Dbench [lindex $Dbench_list 0]
 puts [format "Axial Force, P = %.0f kips" [getTime]]
-puts [format "Mid-height moment, Mmid = %.0f kip-in" $Mmid] 
-puts [format "   compared to 235 kip-in, a %.2f%% difference" [expr 100*(235-$Mmid)/235]]
-puts [format "Mid-height displacement, Dmid = %.3f in" $Dmid]
-puts [format "   compared to 0.197 in, a %.2f%% difference\n" [expr 100*(0.197-$Dmid)/0.197]]
+puts [format "Mid-height moment, Mmid = %.1f kip-in" $Mmid]
+puts [format "   compared to %.0f kip-in, a %.2f%% difference" $Mbench [expr 100*($Mbench-$Mmid)/$Mbench]]
+puts [format "Mid-height displacement, Dmid = %.4f in" $Dmid]
+puts [format "   compared to %.3f in, a %.2f%% difference\n" $Dbench [expr 100*($Dbench-$Dmid)/$Dbench]]
 
 timeSeries Linear 2
 pattern Plain 2 2 {
@@ -66,30 +115,36 @@ analyze 10
 
 set Mmid [lindex [eleResponse 4 forces] 5]
 set Dmid [nodeDisp 5 1]
+set Mbench [lindex $Mbench_list 1]
+set Dbench [lindex $Dbench_list 1]
 puts [format "Axial Force, P = %.0f kips" [getTime]]
-puts [format "Mid-height moment, Mmid = %.0f kip-in" $Mmid] 
-puts [format "   compared to 269 kip-in, a %.2f%% difference" [expr 100*(269-$Mmid)/269]]
-puts [format "Mid-height displacement, Dmid = %.3f in" $Dmid]
-puts [format "   compared to 0.224 in, a %.2f%% difference\n" [expr 100*(0.224-$Dmid)/0.224]]
+puts [format "Mid-height moment, Mmid = %.1f kip-in" $Mmid]
+puts [format "   compared to %.0f kip-in, a %.2f%% difference" $Mbench [expr 100*($Mbench-$Mmid)/$Mbench]]
+puts [format "Mid-height displacement, Dmid = %.4f in" $Dmid]
+puts [format "   compared to %.3f in, a %.2f%% difference\n" $Dbench [expr 100*($Dbench-$Dmid)/$Dbench]]
 
 analyze 10
 
 set Mmid [lindex [eleResponse 4 forces] 5]
 set Dmid [nodeDisp 5 1]
+set Mbench [lindex $Mbench_list 2]
+set Dbench [lindex $Dbench_list 2]
 puts [format "Axial Force, P = %.0f kips" [getTime]]
-puts [format "Mid-height moment, Mmid = %.0f kip-in" $Mmid] 
-puts [format "   compared to 313 kip-in, a %.2f%% difference" [expr 100*(313-$Mmid)/313]]
-puts [format "Mid-height displacement, Dmid = %.3f in" $Dmid]
-puts [format "   compared to 0.261 in, a %.2f%% difference\n" [expr 100*(0.261-$Dmid)/0.261]]
+puts [format "Mid-height moment, Mmid = %.1f kip-in" $Mmid]
+puts [format "   compared to %.0f kip-in, a %.2f%% difference" $Mbench [expr 100*($Mbench-$Mmid)/$Mbench]]
+puts [format "Mid-height displacement, Dmid = %.4f in" $Dmid]
+puts [format "   compared to %.3f in, a %.2f%% difference\n" $Dbench [expr 100*($Dbench-$Dmid)/$Dbench]]
 
 analyze 10
 
 set Mmid [lindex [eleResponse 4 forces] 5]
 set Dmid [nodeDisp 5 1]
+set Mbench [lindex $Mbench_list 3]
+set Dbench [lindex $Dbench_list 3]
 puts [format "Axial Force, P = %.0f kips" [getTime]]
-puts [format "Mid-height moment, Mmid = %.0f kip-in" $Mmid] 
-puts [format "   compared to 375 kip-in, a %.2f%% difference" [expr 100*(375-$Mmid)/375]]
-puts [format "Mid-height displacement, Dmid = %.3f in" $Dmid]
-puts [format "   compared to 0.311 in, a %.2f%% difference\n" [expr 100*(0.311-$Dmid)/0.311]]
+puts [format "Mid-height moment, Mmid = %.1f kip-in" $Mmid]
+puts [format "   compared to %.0f kip-in, a %.2f%% difference" $Mbench [expr 100*($Mbench-$Mmid)/$Mbench]]
+puts [format "Mid-height displacement, Dmid = %.4f in" $Dmid]
+puts [format "   compared to %.3f in, a %.2f%% difference\n" $Dbench [expr 100*($Dbench-$Dmid)/$Dbench]]
 
 puts "Analysis Complete!"
